@@ -3,6 +3,7 @@ version: '3'
 services:
   api:
     build: ./api
+    container_name: roque-one-api
     command: npm run start
     restart: unless-stopped
     ports:
@@ -14,10 +15,29 @@ services:
     depends_on:
       - api_db
 
+  auth:
+    build: ./auth
+    container_name: roque-one-auth
+    command: npm run start
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - HOST=http://realworld.com
+      - MONGO_URL=mongodb://api_db:27017/auth
+
   api_db:
     image: mongo:latest
+    container_name: roque-one-api-db
     volumes:
-      - mongodb_api:/data/api_db
+      - mongodb_api:/data/db
 
+  auth_db:
+    image: mongo:latest
+    container_name: roque-one-auth-db
+    volumes:
+      - mongodb_auth:/data/db
 volumes:
     mongodb_api:
+    mongodb_auth:
