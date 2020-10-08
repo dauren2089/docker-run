@@ -1,15 +1,16 @@
-version: "3.8"
+version: '3'
+
 services:
   api:
     build: ./api
-    command: npm run build
+    command: npm run start
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - PORT=3000
-      - HOST=http://realworld-docker.com
-      - MONGO_URL=mongodb://api_db/27017/api
+      - HOST=http://realworld.com
+      - MONGO_URL=mongodb://api_db:27017/api
     depends_on:
       - api_db
 
