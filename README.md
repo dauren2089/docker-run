@@ -3,7 +3,7 @@ Docker &amp; docker-compose simple project. Build and run react-web, api, api_db
 
 
 ### Документация
-1) Создаем новую директорию для проекта: docker
+1) Создаем новую директорию для проекта: realworld-docker
 
 2) внутри директории создаем новый файл: docker-compose.yml
 
@@ -126,11 +126,158 @@ npm install mongoose
 ```js
     environment:
       - PORT=3000
-      - HOST=http://docker.com
+      - HOST=http://realworld-docker.com
       - MONGO_URL=mongodb://api_db/27017/api
     depends_on:
       - api_db -- задаем зависимости! запустить контейнер API после контейнера API_DB
 
   api_db:
     image: mongo:latest
+```
+
+19) Добавляем папку configuration и файл index.js со следующим содержимым. 
+
+```js
+module.exports.port = process.env.PORT;
+module.exports.host = process.env.HOST;
+module.exports.db = process.env.MONGO_URL;
+```
+
+20) Добавляем папку helpers и файл db.js со следующим содержимым. 
+```js
+const mongoose = require("mongoose");
+const { db } = require("../configuration");
+
+module.exports.connectDb = () => {
+  mongoose.connect(db, { useNewUrlParser: true });
+
+  return mongoose.connection;
+};
+```
+
+21) Для соединения с базой редкатируем файл index.js в API
+```js
+const express = require("express");
+const mongoose = require("mongoose");
+const { port, host, db } = require("./configuration");
+const { connectDb } = require("./helpers/db");
+
+const app = express();
+const postSchema = new mongoose.Schema({
+  name: String
+});
+const Roque = mongoose.model("Roque", postSchema);
+
+app.get("/test", (req, res) => {
+  res.send("Our api server is working correctly");
+});
+
+const startServer = () => {
+  app.listen(port, () => {
+    console.log(`Started api service on port ${port}`);
+    console.log(`Our host is ${host}`);
+    console.log(`Database url ${db}`);
+
+    const roqueOne = new Roque({ name: "Roque-one" });
+    roqueOne.save(function(err, result) {
+      if (err) return console.error(err);
+      console.log("result", result);
+    });
+  });
+};
+
+connectDb()
+  .on("error", console.log)
+  .on("disconnected", connectDb)
+  .once("open", startServer);
+```
+
+22) Настраиваем Хранилище (хранить БД не в контейнере) с помощью VOLUMES
+В файле docker-compose.yml
+
+```js
+  api_db:
+    image: mongo:latest
+    volumes:
+      - mongodb_api:/data/api_db -- указываем где будем хранить данные
+
+volumes: -- инициализируем VOLUMES
+    mongodb_api:
+
+```
+
+23) Для просмотра всех VOLUMES выполняем след. команду:
+```sh
+docker volume ls
+```
+
+24) Разделяем DEV от PROD
+
+> Создаем новый Docker-compose.development.yml файл:
+
+```js
+version: '3'
+
+services:
+  api:
+    command: npm run dev
+    volumes:
+      - ./api/src:/usr/src/app/src
+````
+
+> Устанавливаем nodemon для авто-перезагрузки страницы при внесении изменения
+
+```sh
+ npm install nodemon
+```
+
+> Редактируем Package.json
+
+```JSON
+{
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon"
+  },
+    "dependencies": {
+    "express": "^4.17.1",
+    "mongoose": "^5.9.7",
+    "nodemon": "^2.0.3"
+  }
+```
+
+> Создаем в папке API файл nodemon.json
+
+```JSON
+{
+  "verbose": false,
+  "watch": ["src"],
+  "exec": "node src/index.js"
+}
+
+```
+
+> Запускаем DEV mode
+
+```sh
+docker-compose -f docker-compose.yml -f docker-compose.development.yml up --build
+```
+
+25) Добавляем имя контейнеру
+
+```js
+services:
+  api:
+    build: ./api
+    container_name: roque-one-api -- указываем имя контейнера
+    command: npm run start
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=http://realworld.com
+      - MONGO_URL=mongodb://api_db:27017/api
+    depends_on:
+      - api_db
 ```
