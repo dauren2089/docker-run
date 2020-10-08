@@ -3,6 +3,7 @@ Docker &amp; docker-compose simple project. Build and run react-web, api, api_db
 
 
 ### Документация
+
 1) Создаем новую директорию для проекта: realworld-docker
 
 2) внутри директории создаем новый файл: docker-compose.yml
@@ -280,4 +281,94 @@ services:
       - MONGO_URL=mongodb://api_db:27017/api
     depends_on:
       - api_db
+```
+
+26) Устанавливаем и настраиваем REACT контейнер
+
+```sh
+npm init react-app frontend
+```
+
+> настраиваем Docker-compose.yml, добавляем новый контейнер для Frontend:
+
+```js
+  frontend:
+    build: ./frontend
+    container_name: roque-one-frontend
+    command: npm run start
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    stdin_open: true -- для интерактивного взаимодействия при создании creact-react-app
+    tty: true
+```
+
+> создаем Dokcerfile в папке Frontend
+
+```js
+FROM node:13.12./0-alpine
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+RUN npm install -g serve
+```
+
+>  устанавливаем Serve для DEV мода в Frontend
+
+```sh
+npm install -g serv
+```
+
+27) Открытие контейнера и запуск комманд
+```sh
+	docker exec -it $container_name echo "Foo"
+```
+
+```sh
+	docker exec -it $container_name sh
+```
+
+28) Развертываем NGINX контейнер для проксирование запросов на фронтенд
+
+> добавляем контейнер в docker-compose.yml
+
+```js
+  nginx:
+    image: nginx:stable-alpine
+    container_name: roque-one-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf.prod:/etc/nginx/conf.d/nginx.conf -- задаем путь к конф. -- файлу NGINX
+    depends_on:
+      - frontend
+```
+
+> Проверяем порт 80, занят ли он уже NGINX-ом
+
+```sh
+ps aux | grep nginx
+```
+
+> Создаем конфигурационный файл NGINX > nginx.conf.prod
+
+```js
+	server {
+	  listen 80;
+
+	  server_name Roque-one.com;
+
+	  location / {
+	    proxy_pass http://frontend:3000;
+	  }
+	}
+
 ```
