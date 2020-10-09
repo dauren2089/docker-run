@@ -14,7 +14,7 @@ app.get("/test", (req, res) => {
   res.send("Our api server is working correctly");
 });
 
-app.get("/api/testapidata", (req, res) => {
+app.get("/testapidata", (req, res) => {
   res.json({
     testapidata: true
   });
