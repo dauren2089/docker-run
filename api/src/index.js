@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const { port, host, db } = require("./configuration");
+const axios = require("axios");
+const { port, host, db, authApiUrl } = require("./configuration");
 const { connectDb } = require("./helpers/db");
 
 const app = express();
@@ -12,6 +13,16 @@ const Roque = mongoose.model("Roque", postSchema);
 app.get("/test", (req, res) => {
   res.send("Our api server is working correctly");
 });
+
+app.get('/currentuser', (req, res) => {
+  axios.get(authApiUrl + '/currentuser').then(response => {
+    res.json({
+      currentuser: true,
+      currentUserFromAuth: response.data
+    })
+  });
+
+})
 
 const startServer = () => {
   app.listen(port, () => {

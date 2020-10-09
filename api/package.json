@@ -11,6 +11,7 @@
   "author": "SkyLord",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.20.0",
     "express": "^4.17.1",
     "mongoose": "^5.10.8",
     "nodemon": "^2.0.3"
