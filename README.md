@@ -78,7 +78,7 @@ app.listen(3000, () => {
 
 ```JSON
   "scripts": {
-    "start": "node src/index.js"// при команде Start - запускаем  index.js 
+    "start": "node src/index.js"
   }
 ```
 
