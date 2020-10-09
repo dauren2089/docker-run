@@ -404,3 +404,98 @@ ps aux | grep nginx
 	}
 
 ```
+
+### 10. Fetching данных
+
+#### 10.1 Установка Axios в API
+```sh
+npm install -y axios
+```
+
+#### 10.2 Добавление функции обмена данными между API и AUTH о пользователях
+
+> Добавить в API Index.js
+```js
+const axios = require("axios");
+const { port, host, db, authApiUrl } = require("./configuration");
+
+app.get('/currentuser', (req, res) => {
+  axios.get(authApiUrl + '/currentuser').then(response => {
+    res.json({
+      currentuser: true,
+      currentUserFromAuth: response.data
+    });
+  });
+});
+```
+
+> Добавить в AUTH Index.js
+
+```js
+app.get("/api/currentuser", (req, res) => {
+	res.json({
+		id: "12345",
+		email: "user@email.com"
+	});
+});
+```
+>Добавить в > API/configuration Index.js
+
+```js
+module.exports.authApiUrl = process.env.AUTH_API_URL;
+```
+
+>Добавить в Docker-compose.yml новую переменную окружения AUTH_API_URL
+
+```js
+    environment:
+      - AUTH_API_URL=http://auth:3002/api
+```
+
+### 11. Сети Docker
+
+Вывести список сетей docker
+```sh
+	docker network ls
+```
+
+Создать сеть и присоединить к нему приложение APP.(файл docker-compose)
+```js
+app:
+  	networks:
+      - docker-up
+	networks:
+  		docker-up:
+    		driver: bridge
+```
+
+### 12. Проксирование Фронтэнд
+
+#### 12.1 Добавить прокси в файл nginx.conf.prod
+
+```js
+ location /api {
+    proxy_pass http://api:3001;
+    rewrite ^/api/(.*) /$1 break;
+  }
+
+  location /api {
+    proxy_pass http://auth:3002;
+    rewrite ^/auth/api/(.*) /$1 break;
+  }
+```
+
+#### 12.2 Установить axios в Frontend
+
+```sh
+npm i -y axios
+```
+#### 12.3 Запустить PROD контейнеры
+```sh
+docker-compose up --build
+```
+
+#### 12.4 Запустить DEV контейнеры
+```sh
+docker-compose -f docker-compose.yml -f docker-compose.development.yml up --build
+```
