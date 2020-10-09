@@ -5,35 +5,41 @@ const { port, host, db, authApiUrl } = require("./configuration");
 const { connectDb } = require("./helpers/db");
 
 const app = express();
-const postSchema = new mongoose.Schema({
+const kittySchema = new mongoose.Schema({
   name: String
 });
-const Roque = mongoose.model("Roque", postSchema);
+const Kitten = mongoose.model("Kitten", kittySchema);
 
 app.get("/test", (req, res) => {
   res.send("Our api server is working correctly");
 });
 
-app.get('/currentuser', (req, res) => {
-  axios.get(authApiUrl + '/currentuser').then(response => {
-    res.json({
-      currentuser: true,
-      currentUserFromAuth: response.data
-    })
+app.get("/api/testapidata", (req, res) => {
+  res.json({
+    testapidata: true
   });
+});
 
-})
+app.get("/testwithcurrentuser", (req, res) => {
+  axios.get(authApiUrl + "/currentUser").then(response => {
+    res.json({
+      testwithcurrentuser: true,
+      currentUserFromAuth: response.data
+    });
+  });
+});
 
 const startServer = () => {
   app.listen(port, () => {
     console.log(`Started api service on port ${port}`);
     console.log(`Our host is ${host}`);
     console.log(`Database url ${db}`);
+    console.log(`Auth api url ${authApiUrl}`);
 
-    const roqueOne = new Roque({ name: "Roque-one" });
-    roqueOne.save(function(err, result) {
+    const silence = new Kitten({ name: "Silence" });
+    silence.save(function(err, result) {
       if (err) return console.error(err);
-      console.log("result", result);
+      console.log("result with volumes", result);
     });
   });
 };
