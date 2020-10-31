@@ -499,3 +499,183 @@ docker-compose up --build
 ```sh
 docker-compose -f docker-compose.yml -f docker-compose.development.yml up --build
 ```
+
+# Практика по Docker Swarm 
+
+## 13 Инициализация контейнеров и стэка
+
+### 13.1 Установка на хост машине
+
+```sh
+$ docker swarm init --advertise-addr 192.168.99.100
+```
+### 13.2 Проверка списка стэка
+
+```sh
+$ docker node ls
+```
+
+### 13.3 Вывести Токен для Добавление новых нод в стэк (Worker-ов)
+
+```sh
+$ docker swarm join-token worker
+```
+
+### 13.4 Вывести Токен для Добавление новых нод в стэк (Manager-ов)
+
+```sh
+$ docker swarm join-token manager
+```
+
+### 13.5 Добавление новых нод в стэк (Worker-ов)
+
+```sh
+$ docker swarm join \
+    --token SWMTKN-1-49nj1cmql0jkz5s954yi3oex3nedyz0fb0xx14ie39trti4wxv-8vxv8rssmk743ojnwacrr2e7c \
+    192.168.99.100:2377
+```
+
+### 13.6 Добавление новых нод в стэк (Manager-ов)
+
+```sh
+$ docker swarm join --token SWMTKN-1-5gn6hc6uvds8ckh886raf3peq1lcc3txbmm57vosbzvb561zpb-bp3nf5auzhzt2hbyi5vfo9jan 192.168.99.100:2377
+```
+
+## 14 Проверка статусов и сервисов
+
+### 14.1 Вывести инфо о контейнерах
+
+```sh
+$ docker info
+```
+
+### 14.2 Вывести инфо о нодах
+
+```sh
+$ docker node ls
+```
+
+### 14.3 Вывести инфо о запущенных сервисах
+
+```sh
+$ docker service ls
+```
+
+### 14.4 Инспектирование главной ноды
+
+```sh
+$ docker node inspect self --pretty
+```
+
+### 14.5 Инспектирование нодов
+
+```sh
+$ docker node inspect node_name
+```
+
+## 15 Удаление нодов
+
+### 15.1 Выход из стэка (выполнить на удаляемой машине)
+```sh
+$ docker swarm leave
+```
+
+### 15.2 Удаление ноды из стека (выполнить на главной машине)
+```sh
+$ docker node rm node_name
+```
+
+## 16 Установка Стэка из YML файла
+
+### 16.1 Создание инструкции для YML файла
+
+```JSON
+version: "3"
+
+services:
+  wordpress:
+    image: wordpress
+    ports:
+      - 80:80
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp_pass
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_USER: wp
+      MYSQL_PASSWORD: wp_pass
+      MYSQL_DATABASE: wp
+      MYSQL_ROOT_PASSWORD: root
+
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: mysql
+```
+
+### 16.2 Запуск стэка из YML файла (выполнить на главной машине)
+
+```sh
+$ docker stack deploy --compose-file stack_file_name.yaml stack_name 
+OR
+$ docker stack deploy -c stack_file_name.yaml stack_name
+```
+
+### 16.3 Проверка списка Стэка
+
+```sh
+$ docker service ls
+OR
+$ docker stack services stack_name
+```
+
+### 16.4 Удаление стэка
+
+```sh
+$ docker stack rm stack_name
+```
+
+## 17 Portainer UI-для управление контейнерами и стэком
+[Инструкции по установке Portainer](https://www.portainer.io/installation/)
+
+### 17.1 Установка Portainer
+
+```sh
+$ curl -L https://downloads.portainer.io/portainer-agent-stack.yml -o portainer-agent-stack.yml
+$ docker stack deploy --compose-file=portainer-agent-stack.yml portainer
+```
+
+### 17.2 Развертывание нового Стэка с помощью Portainer.
+
+Необходимо зайти в Portainer, добавить новый стэк из YML файла.
+
+Содержимое YML файла:
+```json
+version: "3"
+
+services:
+  redmine:
+    image: redmine
+    ports:
+      - 3000:3000
+    environment:
+      REDMINE_DB_MYSQL: db
+      REDMINE_DB_USERNAME: redmine
+      REDMINE_DB_PASSWORD: password
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: redmine
+      MYSQL_USER: redmine
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+```
+
+docker swarm join --token SWMTKN-1-0ccqj23o6lsngvg7c2jkq0hliklxx0rh6daxey9v2or no296ve-0ajjott1nth4p6g5ly8jtwxqr 192.168.0.28:2377
